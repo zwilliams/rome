@@ -48,6 +48,7 @@ rome(win, {
 });
 
 rome(tim, {
+  timeWhitelist: ['08:31', '14:43'],
   timeValidator: function (d) {
     var m = moment(d);
     var start = m.clone().hour(12).minute(59).second(59);

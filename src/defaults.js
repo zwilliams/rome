@@ -5,8 +5,28 @@ var isInput = require('./isInput');
 var momentum = require('./momentum');
 
 function defaults (options, cal) {
+
+  function validateTimelist (list, listName) {
+    var i;
+    if (list === no) {
+      list = [];
+    } else if (Object.prototype.toString.call( o.timeWhitelist ) !== '[object Array]') {
+      throw new Error('`' + listName + '` must be an array or undefined');
+    } else {
+      for (i = 0; i < list.length; i++) {
+        list[i] = parse(list[i], o.timeFormat);
+        if (!list[i]) {
+          throw new Error('`' + listName + '` contains an invalid time at index ' + i);
+        }
+      }
+      list.sort(); //sort by time, not formatted string
+    }
+    return list;
+  }
+
   var temp;
   var no;
+  var i;
   var o = options || {};
   if (o.autoHideOnClick === no) { o.autoHideOnClick = true; }
   if (o.autoHideOnBlur === no) { o.autoHideOnBlur = true; }
@@ -40,7 +60,9 @@ function defaults (options, cal) {
   }
   if (o.min === no) { o.min = null; } else { o.min = parse(o.min, o.inputFormat); }
   if (o.max === no) { o.max = null; } else { o.max = parse(o.max, o.inputFormat); }
+  if (o.timeFormat === no) { o.timeFormat = 'HH:mm'; }
   if (o.timeInterval === no) { o.timeInterval = 60 * 30; } // 30 minutes by default
+  o.timeWhitelist = validateTimelist(o.timeWhitelist, 'timeWhitelist');
   if (o.min && o.max) {
     if (o.max.isBefore(o.min)) {
       temp = o.max;
@@ -52,12 +74,17 @@ function defaults (options, cal) {
         throw new Error('`max` must be at least one day after `min`');
       }
     } else if (o.timeInterval * 1000 - o.min % (o.timeInterval * 1000) > o.max - o.min) {
-      throw new Error('`min` to `max` range must allow for at least one time option that matches `timeInterval`');
+      if (
+        o.timeWhitelist.length === 0
+        || o.min.format('HHmmssSSS') > o.timeWhitelist[o.timeWhitelist.length - 1].format('HHmmssSSS')
+        || o.max.format('HHmmssSSS') < o.timeWhitelist[0].format('HHmmssSSS')
+      ) {
+        throw new Error('`min` to `max` range must allow for at least one time option that matches `timeInterval` or `timeWhitelist`');
+      }
     }
   }
   if (o.dateValidator === no) { o.dateValidator = Function.prototype; }
   if (o.timeValidator === no) { o.timeValidator = Function.prototype; }
-  if (o.timeFormat === no) { o.timeFormat = 'HH:mm'; }
   if (o.weekStart === no) { o.weekStart = momentum.moment().weekday(0).day(); }
   if (o.weekdayFormat === no) { o.weekdayFormat = 'min'; }
   if (o.weekdayFormat === 'long') {

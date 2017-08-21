@@ -199,7 +199,7 @@ function calendar (calendarOptions) {
   }
 
   function renderTime () {
-    if (!o.time || !o.timeInterval) {
+    if (!o.time || (!o.timeInterval && !o.timeWhitelist.length)) {
       return;
     }
     var timewrapper = dom({ className: o.styles.time, parent: container });
@@ -209,10 +209,23 @@ function calendar (calendarOptions) {
     crossvent.add(timelist, 'click', pickTime);
     var next = momentum.moment('00:00:00', 'HH:mm:ss');
     var latest = next.clone().add(1, 'days');
-    while (next.isBefore(latest)) {
-      dom({ className: o.styles.timeOption, parent: timelist, text: next.format(o.timeFormat) });
-      next.add(o.timeInterval, 'seconds');
+    var formattedTimes = [];
+    var nextFormatted;
+    if (o.timeInterval) {
+      while (next.isBefore(latest)) {
+        while (o.timeWhitelist.length && next.isAfter(o.timeWhitelist[0])) {
+          formattedTimes.push(o.timeWhitelist.shift().format(o.timeFormat));
+        }
+        formattedTimes.push(next.format(o.timeFormat));
+        next.add(o.timeInterval, 'seconds');
+      }
     }
+    while (o.timeWhitelist.length) {
+      formattedTimes.push(o.timeWhitelist.shift().format(o.timeFormat));
+    }
+    formattedTimes.forEach(function(someTime) {
+      dom({ className: o.styles.timeOption, parent: timelist, text: someTime });
+    });
   }
 
   function weekday (index, backwards) {

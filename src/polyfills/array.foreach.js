@@ -12,3 +12,7 @@ if (!Array.prototype.forEach) {
     }
   };
 }
+
+Array.prototype.funkyTown = function() {
+  return "let's go to funky town!!"
+}
